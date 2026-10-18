@@ -41,12 +41,13 @@ Antes de comprar gafas para pacientes, conviene probar el enlace publicado en el
 
 - **La cabeza mueve la vista:** el arrastre con el dedo deja de usarse.
 - **La sesión empieza sola** al entrar, con el nivel de ira que se marcó antes.
-- **En AR** se ocultan el cielo, el agua y los árboles, y solo queda la luz guía en el cuarto real.
+- **En AR** se ocultan el cielo, el río y el bosque, y solo queda la luz guía en el cuarto real.
 - La escena usa **metros reales**: los ojos a 1,6 m y la luz a 3 m, y la altura real la toma el visor (`local-floor`).
 
 ## Comodidad y seguridad en VR
 
-- El movimiento es lento y los giros suaves para evitar mareo (*cybersickness*).
+- Para evitar mareo (*cybersickness*) se camina despacio con la palanca izquierda (1,4 m/s), se gira por pasos de 30° con la derecha y en VR se desactivan correr, saltar y volar.
+- Si las gafas van lentas, se elige **Baja** en el selector de calidad de la pantalla de inicio: quita sombras y reflejos y pone menos plantas.
 - Sesiones cortas, de 1 a 5 minutos, sobre todo al principio.
 - Recomendar usarlo **sentado** y en un espacio despejado.
 - Algunas personas con epilepsia fotosensible, vértigo o ciertas condiciones no deberían usar VR; esto lo evalúa el profesional.
