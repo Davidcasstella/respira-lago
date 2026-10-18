@@ -32,6 +32,19 @@ El relieve (*normal map*) del pasto se usa en todo el terreno; así se ahorra ca
 | `tree_oak.glb` | Roble | Nature Kit 2.1, Kenney | CC0 |
 | `plant_bushDetailed.glb` | Arbustos | Nature Kit 2.1, Kenney | CC0 |
 | `log.glb` | Troncos caídos | Nature Kit 2.1, Kenney | CC0 |
+| `flower_yellowA.glb`, `flower_redA.glb`, `flower_purpleA.glb` | Flores del prado | Nature Kit 2.1, Kenney | CC0 |
+| `mushroom_redGroup.glb` | Hongos | Nature Kit 2.1, Kenney | CC0 |
+| `campfire_logs.glb`, `campfire_stones.glb` | Fogata | Nature Kit 2.1, Kenney | CC0 |
+
+## Animales (`animales/`)
+
+| Archivo | Uso | Fuente | Licencia |
+|---|---|---|---|
+| `zorro.glb` | Zorros que pasean (animación de caminar) | "Red Fox" de [Animals Pack, Quaternius (OpenGameArt)](https://opengameart.org/content/5-low-poly-animals) | CC0 |
+| `pajaro.glb` | Bandadas (animación de vuelo) | "Bird" del mismo paquete | CC0 |
+| `pez.glb` | Peces que saltan en el río | "Fish" del mismo paquete | CC0 |
+
+Venían en FBX sin colores. Se convirtieron a `.glb` con `FBXLoader` y `GLTFExporter` de Three.js r170, con la animación incluida. Los colores se pintaron por vértice para que cada animal sea una sola llamada de dibujo.
 
 A los modelos de Kenney se les cambian los colores en el código (`js/bosque.js`) para que se vean más naturales.
 
@@ -39,4 +52,6 @@ A los modelos de Kenney se les cambian los colores en el código (`js/bosque.js`
 
 - **Pasto:** manojos de hojas finas generados en `js/bosque.js`.
 - **Cielo:** `Sky.js` de los ejemplos oficiales de Three.js (cielo físico de Preetham).
-- **Sonido:** río, pájaros y acorde sintetizados con Web Audio en `js/sonido.js`.
+- **Sonido:** río, pájaros, fogata, chapoteos y acorde sintetizados con Web Audio en `js/sonido.js`.
+- **Mariposas, llamas y chispas:** geometría y texturas generadas en `js/vida.js`.
+- **Guía de respiración (pulmones y figura):** dibujo SVG propio en `js/guia.js`.

@@ -22,7 +22,8 @@ const PERFILES = {
     arboles: 1100, arbustos: 180, helechos: 240, rocas: 150, troncos: 18,
     pasto: 36000, pastoRadio: 70,
     luciernagas: 260, polen: 500,
-    niebla: 0.0105, xrEscala: 1
+    flores: 900, hongos: 90, zorros: 4, bandadas: 3, peces: 3, mariposas: 40,
+    niebla: 0.0085, xrEscala: 1
   },
   baja: {
     pixelRatio: Math.min(devicePixelRatio, 1.25), antialias: false,
@@ -31,7 +32,8 @@ const PERFILES = {
     arboles: 380, arbustos: 70, helechos: 90, rocas: 70, troncos: 8,
     pasto: 7000, pastoRadio: 40,
     luciernagas: 110, polen: 160,
-    niebla: 0.016, xrEscala: 0.8
+    flores: 300, hongos: 30, zorros: 2, bandadas: 2, peces: 2, mariposas: 16,
+    niebla: 0.013, xrEscala: 0.8
   }
 };
 

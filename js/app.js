@@ -5,9 +5,12 @@ import { Sky } from "three/addons/objects/Sky.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { Q, nivel, guardarCalidad } from "./calidad.js";
 import { crearTerreno, crearAgua, rioX, distRio, AGUA } from "./terreno.js";
-import { crearBosque, crearParticulas, viento, INICIO } from "./bosque.js";
+import { crearBosque, crearParticulas, viento, INICIO, YAW_INICIO, FOGATA } from "./bosque.js";
+import { crearVida } from "./vida.js";
+import { crearGuia, crearGuiaXR } from "./guia.js";
 import { Jugador } from "./controles.js";
-import { iniciarSonido, sonidoEncendido, haySonido, faseSonido, rioSonido } from "./sonido.js";
+import * as sonido from "./sonido.js";
+import { iniciarSonido, sonidoEncendido, haySonido, faseSonido, rioSonido, fogataSonido } from "./sonido.js";
 
 /* ===== Escena ===== */
 const canvas = document.getElementById("scene");
@@ -15,13 +18,13 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: Q.antialias, alpha
 renderer.setPixelRatio(Q.pixelRatio);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.5;
+renderer.toneMappingExposure = 0.55;
 renderer.shadowMap.enabled = Q.sombras;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.xr.setFramebufferScaleFactor?.(Q.xrEscala);
 
 const scene = new THREE.Scene();
-const NIEBLA = new THREE.FogExp2(0xa88f7c, Q.niebla);
+const NIEBLA = new THREE.FogExp2(0xd0a27e, Q.niebla)   // bruma dorada, no gris;
 scene.fog = NIEBLA;
 const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 3000);
 const rig = new THREE.Group();            // el "cuerpo" del jugador; en VR la cabeza se mueve sola
@@ -29,11 +32,11 @@ rig.add(camera); scene.add(rig);
 
 const world = new THREE.Group(); scene.add(world);   // todo lo que se oculta en AR
 
-// Cielo físico del atardecer (Sky de los ejemplos de Three.js) y luz del sol
-const sol = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(87.6), THREE.MathUtils.degToRad(200));
+// Cielo físico de la hora dorada (Sky de los ejemplos de Three.js) y luz del sol
+const sol = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(85.5), THREE.MathUtils.degToRad(200));
 const sky = new Sky(); sky.scale.setScalar(2500);
 const u = sky.material.uniforms;
-u.turbidity.value = 10; u.rayleigh.value = 2.6; u.mieCoefficient.value = 0.008; u.mieDirectionalG.value = 0.93; u.sunPosition.value.copy(sol);
+u.turbidity.value = 8; u.rayleigh.value = 3.4; u.mieCoefficient.value = 0.006; u.mieDirectionalG.value = 0.9; u.sunPosition.value.copy(sol);
 world.add(sky);
 
 // El cielo también ilumina: se convierte en mapa de entorno una sola vez
@@ -41,12 +44,12 @@ world.add(sky);
   const pm = new THREE.PMREMGenerator(renderer), cieloSolo = new THREE.Scene(), copia = new Sky();
   copia.scale.setScalar(2500); copia.material.uniforms = THREE.UniformsUtils.clone(u); cieloSolo.add(copia);
   scene.environment = pm.fromScene(cieloSolo, 0, 0.1, 3000).texture;
-  scene.environmentIntensity = 0.8;
+  scene.environmentIntensity = 0.9;
   pm.dispose();
 }
 
-const hemi = new THREE.HemisphereLight(0xffd2a6, 0x3a4a2a, 0.9); scene.add(hemi);
-const luzSol = new THREE.DirectionalLight(0xffb27a, 2.4);
+const hemi = new THREE.HemisphereLight(0xffdcae, 0x56603a, 0.85); scene.add(hemi);
+const luzSol = new THREE.DirectionalLight(0xffb070, 2.5);
 luzSol.castShadow = Q.sombras;
 Object.assign(luzSol.shadow.camera, { left: -38, right: 38, top: 38, bottom: -38, near: 1, far: 220 });
 luzSol.shadow.mapSize.set(Q.sombraTam, Q.sombraTam);
@@ -61,32 +64,21 @@ const agua = crearAgua(Q, texLoader, sol, true); world.add(agua);
 const particulas = crearParticulas(Q); world.add(particulas);
 
 const $ = id => document.getElementById(id);
-let piezasListas = 0;
-const avisoCarga = () => { const p = Math.round(piezasListas / 8 * 100); $("carga").textContent = p < 100 ? `Cargando el bosque… ${p} %` : ""; };
-crearBosque(Q, new GLTFLoader(manager), () => { piezasListas++; avisoCarga(); })
-  .then(b => { world.add(b); $("carga").textContent = ""; document.body.dataset.listo = "1"; })
-  .catch(e => { console.warn("No se pudo cargar el bosque", e); $("carga").textContent = "No se pudieron cargar los árboles; el ejercicio funciona igual."; document.body.dataset.listo = "1"; });
+let piezasListas = 0, vida = null;
+const avisoCarga = () => { const p = Math.round(piezasListas / 12 * 100); $("carga").textContent = p < 100 ? `Cargando el bosque… ${p} %` : ""; };
+const gltf = new GLTFLoader(manager);
+crearBosque(Q, gltf, () => { piezasListas++; avisoCarga(); })
+  .then(b => { world.add(b); return crearVida(Q, gltf, sonido); })
+  .then(v => { vida = v; world.add(v); $("carga").textContent = ""; document.body.dataset.listo = "1"; })
+  .catch(e => { console.warn("No se pudo cargar el bosque", e); $("carga").textContent = "No se pudieron cargar los árboles o los animales; el ejercicio funciona igual."; document.body.dataset.listo = "1"; });
 
-// Orbe guía (en metros: 1,6 m de alto, 3 m delante)
-function glowTexture() {
-  const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d");
-  const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gr.addColorStop(0, "rgba(255,240,215,1)"); gr.addColorStop(0.25, "rgba(255,200,150,.55)"); gr.addColorStop(1, "rgba(255,170,120,0)");
-  g.fillStyle = gr; g.fillRect(0, 0, 128, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-}
-const orb = new THREE.Group();
-const core = new THREE.Mesh(new THREE.SphereGeometry(0.22, 32, 16), new THREE.MeshBasicMaterial({ color: 0xffe9cf, toneMapped: false, fog: false }));
-const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, fog: false }));
-halo.scale.set(1.6, 1.6, 1);
-const ring = new THREE.Mesh(new THREE.RingGeometry(0.62, 0.64, 64), new THREE.MeshBasicMaterial({ color: 0x8fc3c0, transparent: true, opacity: 0.5, side: THREE.DoubleSide, toneMapped: false, fog: false }));
-orb.add(core, halo, ring); scene.add(orb);
-const orbLight = new THREE.PointLight(0xffc48a, 1.2, 9, 1.4); orb.add(orbLight);
+// Guía de respiración: panel con pulmones y brazos (pantalla) o el mismo dibujo flotando (VR/AR)
+const guia = crearGuia($("guia"));
+const guiaXR = crearGuiaXR(THREE); guiaXR.visible = false; scene.add(guiaXR);
 
 /* ===== Movimiento ===== */
 const jugador = new Jugador({ camera, rig, canvas, renderer });
-const YAW_INICIO = 0.55;                                   // mirando río abajo, con el agua a la izquierda
-jugador.ubicar(INICIO.x, INICIO.z, YAW_INICIO);
-orb.position.set(INICIO.x - 1.5, rig.position.y + 1.7, INICIO.z - 2.6);
+jugador.ubicar(INICIO.x, INICIO.z, YAW_INICIO);           // mirando río abajo, con el agua a la izquierda
 
 const tactil = matchMedia("(pointer: coarse)").matches || ("ontouchstart" in window && navigator.maxTouchPoints > 0);
 document.body.classList.toggle("tactil", tactil);
@@ -155,7 +147,8 @@ function show(id) {
 async function begin() {
   preScore = +$("pre").value; iniciarSonido(); sonidoEncendido(haySonido());
   state = "countin"; tStart = performance.now() / 1000 + 3; lastPhase = "";
-  show("session"); $("phase").textContent = "Prepárate"; $("phaseSub").textContent = "Mira la luz junto al río. Empezamos en 3 segundos";
+  show("session"); $("phase").textContent = "Prepárate"; $("phaseSub").textContent = "Siéntate o párate cómodo. Empezamos en 3 segundos";
+  guia.preparar(PROTOCOL.brazos === false ? "Hombros sueltos, mirada suave" : "Brazos relajados a los lados del cuerpo");
   say("Ponte cómodo. Vamos a respirar juntos.");
   try { wakeLock = await navigator.wakeLock?.request("screen"); } catch (e) {}
 }
@@ -227,10 +220,12 @@ renderer.setAnimationLoop(() => {
   luzSol.target.position.copy(rig.position);
 
   // Respiración
-  let breath = 0.5 + 0.08 * Math.sin(T * 0.8);
-  if (state === "countin" || state === "running") {
+  let breath = 0;
+  const respirando = state === "countin" || state === "running";
+  document.body.classList.toggle("respirando", respirando);
+  if (respirando) {
     const t = now - tStart;
-    if (t < 0) { $("clock").textContent = "Empieza en " + Math.ceil(-t); }
+    if (t < 0) { $("clock").textContent = "Empieza en " + Math.ceil(-t); $("guiaFase").textContent = Math.ceil(-t); }
     else {
       state = "running";
       const [ph, v, left] = phaseAt(t); breath = ease(v);
@@ -241,18 +236,23 @@ renderer.setAnimationLoop(() => {
       }
       $("bar").style.width = Math.min(100, t / sessionLen * 100) + "%";
       $("clock").textContent = fmt(sessionLen - t) + " restantes · " + Math.ceil(left) + " s";
+      guia.actualizar(ph, breath, PROTOCOL.brazos !== false);
+      $("guiaFase").textContent = Math.ceil(left) + " s";
       if (t >= sessionLen && ph === "rest") finish();
     }
   }
-  const s = 0.55 + breath * 0.85;
-  core.scale.setScalar(s); halo.scale.set(1.2 + breath * 2.4, 1.2 + breath * 2.4, 1);
-  ring.scale.setScalar(0.7 + breath * 0.9); ring.material.opacity = 0.25 + breath * 0.45;
-  orbLight.intensity = 0.6 + breath * 1.6;
 
-  // El orbe se queda delante de la mirada, a 3 m, siguiéndola despacio
+  // En VR/AR la guía flota abajo a la izquierda de la mirada, sin tapar el frente
   camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
-  target.copy(tmp).addScaledVector(fwd, 3); target.y = tmp.y + (arMode ? 0 : 0.1);
-  orb.position.lerp(target, Math.min(1, dt * 1.2)); ring.lookAt(tmp);
+  guiaXR.visible = renderer.xr.isPresenting && respirando;
+  if (guiaXR.visible) {
+    target.copy(fwd).applyAxisAngle(THREE.Object3D.DEFAULT_UP, 0.45).multiplyScalar(2.2).add(tmp); target.y = tmp.y - 0.45;
+    guiaXR.position.lerp(target, Math.min(1, dt * 1.5));
+    guiaXR.dibujar(breath, PROTOCOL.brazos !== false);
+  }
+
+  vida?.animar(dt, T, tmp);
+  fogataSonido(Math.hypot(tmp.x - FOGATA.x, tmp.z - FOGATA.z));
 
   // El río suena más fuerte de cerca y del lado donde está
   derecha.set(-fwd.z, 0, fwd.x);

@@ -1,6 +1,6 @@
 # Respira Lago
 
-Ejercicio de respiración guiada en 3D para ayudar a manejar la **ira**. La persona entra a un bosque con un río al atardecer y sigue una luz que crece cuando toma aire y se apaga cuando lo suelta. Hay sonido ambiente, voz guía en español y una escala de ira de 0 a 10 antes y después de cada sesión.
+Ejercicio de respiración guiada en 3D para ayudar a manejar la **ira**. La persona entra a un bosque con un río a la hora dorada, con zorros, pájaros, peces, mariposas y una fogata. A un lado de la pantalla, una guía con unos pulmones le muestra cuándo tomar y soltar el aire y cómo mover los brazos; se puede minimizar. Hay sonido ambiente, voz guía en español y una escala de ira de 0 a 10 antes y después de cada sesión.
 
 Es un **prototipo (MVP)** para mostrarle a un psicólogo y validar la idea. Funciona con un solo enlace en:
 
@@ -9,10 +9,10 @@ Es un **prototipo (MVP)** para mostrarle a un psicólogo y validar la idea. Func
 | Computador | Clic en la escena para capturar el mouse y mirar (Esc lo suelta). **W A S D** caminar, **Shift** correr, **Espacio** saltar, **F** volar (en vuelo: Espacio sube, Ctrl o C baja) |
 | Celular | Joystick a la izquierda para moverse, arrastrar el dedo en la pantalla para mirar y botones de **Saltar**, **Correr** y **Volar** |
 | Gafas de realidad virtual (Meta Quest y otras con WebXR) | Botón **Ver en gafas (VR)**; se mira girando la cabeza, palanca izquierda para caminar despacio y derecha para girar por pasos. Sin correr ni volar, para no marear |
-| Realidad aumentada (Chrome en Android, gafas con passthrough) | Botón **Realidad aumentada**; la luz flota en el cuarto real |
+| Realidad aumentada (Chrome en Android, gafas con passthrough) | Botón **Realidad aumentada**; la guía de respiración flota en el cuarto real |
 
 <p align="center">
-  <img src="docs/captura-sesion.jpg" width="720" alt="Sesión de respiración junto al río, en el bosque al atardecer, con la luz guía en el centro">
+  <img src="docs/captura-sesion.jpg" width="720" alt="Sesión de respiración junto al río, con la guía de los pulmones a la izquierda y una fogata">
 </p>
 <p align="center">
   <img src="docs/captura-inicio.jpg" width="440" alt="Pantalla de inicio en el computador con la escala de ira, la duración y el selector de calidad">
@@ -27,7 +27,7 @@ Es un **prototipo (MVP)** para mostrarle a un psicólogo y validar la idea. Func
 ## Cómo funciona una sesión
 
 1. **Antes:** la persona marca cuánta ira siente (0 = nada, 10 = máxima) y elige la duración: 1, 3 o 5 minutos.
-2. **Respiración:** cada ciclo es *toma aire (4 s) → sostén (1 s) → suelta (6 s) → descansa (1 s)*, unas 5 respiraciones por minuto. La luz, el sonido y la voz siguen el ritmo. La exhalación es más larga que la inhalación porque eso ayuda a bajar la activación del cuerpo.
+2. **Respiración:** cada ciclo es *toma aire (4 s) → sostén (1 s) → suelta (6 s) → descansa (1 s)*, unas 5 respiraciones por minuto. La guía, el sonido y la voz siguen el ritmo: los pulmones se llenan y se vacían, la figura sube los brazos al tomar aire y los baja al soltarlo, y una frase dice qué hacer con el cuerpo. La exhalación es más larga que la inhalación porque eso ayuda a bajar la activación del cuerpo.
 3. **Después:** vuelve a marcar su nivel de ira y ve la diferencia, por ejemplo **6 → 3**.
 4. **Historial:** se guardan las últimas sesiones (fecha, duración, antes y después) **solo en ese navegador**.
 
@@ -40,6 +40,7 @@ En la pantalla de inicio hay un selector **Alta / Baja**. La primera vez se elig
 | | Alta | Baja |
 |---|---|---|
 | Árboles / helechos / manojos de pasto | 1100 / 240 / 36 000 | 380 / 90 / 7 000 |
+| Flores / zorros / bandadas / peces / mariposas | 900 / 4 / 3 / 3 / 40 | 300 / 2 / 2 / 2 / 16 |
 | Sombras suaves | Sí (2048 px) | No |
 | Río | `Water` con reflejo en tiempo real | Agua liviana que refleja el cielo |
 | Resolución | hasta 2× | hasta 1,25×; en VR 0,8× con *foveation* |
@@ -75,12 +76,14 @@ respira-lago/
 ├── index.html          Página: pantallas de inicio, sesión y cierre
 ├── css/estilos.css     Colores, tipografía y diseño de las pantallas
 ├── js/protocolo.js     ← Contenido terapéutico: tiempos y frases (lo edita el psicólogo)
-├── js/app.js           Escena, luz guía, sesión, voz, VR/AR y bucle principal
+├── js/app.js           Escena, cielo y luces, sesión, voz, VR/AR y bucle principal
 ├── js/calidad.js       Perfiles de calidad alta y baja
 ├── js/terreno.js       Relieve, cauce del río y agua
-├── js/bosque.js        Árboles, helechos, rocas y pasto (InstancedMesh), luciérnagas y polen
+├── js/bosque.js        Árboles, helechos, rocas, flores, hongos y pasto (InstancedMesh), luciérnagas y polen
+├── js/vida.js          Zorros, pájaros, peces, mariposas y la fogata
+├── js/guia.js          Guía de respiración: pulmones y brazos (pantalla y VR)
 ├── js/controles.js     Mouse y teclado, joystick táctil y mandos de VR
-├── js/sonido.js        Río, pájaros y acorde sintetizados
+├── js/sonido.js        Río, pájaros, fogata, chapoteos y acorde sintetizados
 ├── assets/             Texturas, modelos .glb y CREDITOS.md (fuente y licencia de cada uno)
 └── docs/
     ├── PROTOCOLO.md     Guía para ajustar el ejercicio sin saber programar
@@ -96,12 +99,13 @@ Todo lo terapéutico está en un solo archivo, [`js/protocolo.js`](js/protocolo.
 
 - **[Three.js](https://threejs.org/) r170** (`three@0.170.0`), cargado con *import map* desde jsdelivr: escena 3D y WebXR (VR/AR). De sus ejemplos oficiales se usan `Sky`, `Water`, `PointerLockControls` y `GLTFLoader`.
 - **Recursos CC0** de [Poly Haven](https://polyhaven.com) y [Kenney](https://kenney.nl): texturas de 1K y modelos `.glb` pequeños (unos 2,4 MB en total). Detalle en [assets/CREDITOS.md](assets/CREDITOS.md).
-- **Web Audio API:** el río, los pájaros y el acorde de fondo se sintetizan en el navegador, sin archivos de audio.
+- **Animales CC0** de [Quaternius](https://quaternius.com) (zorro, pájaro y pez con su animación), convertidos a `.glb`.
+- **Web Audio API:** el río, los pájaros, la fogata y el acorde de fondo se sintetizan en el navegador, sin archivos de audio.
 - **Web Speech API:** voz guía en español con la voz que tenga instalada el dispositivo.
 - **localStorage:** historial local de sesiones.
 - Sin frameworks, sin compilación y sin servidor propio.
 
-Todo está en **escala real (metros)**: los ojos a 1,6 m de altura y la luz a 3 m de distancia. Por eso la misma escena funciona en las gafas sin rehacerla. En VR se camina despacio (1,4 m/s), se gira por pasos y no se puede correr, saltar ni volar, para no causar mareo.
+Todo está en **escala real (metros)**: los ojos a 1,6 m de altura. Por eso la misma escena funciona en las gafas sin rehacerla. En VR se camina despacio (1,4 m/s), se gira por pasos y no se puede correr, saltar ni volar, para no causar mareo.
 
 ## Privacidad
 

@@ -12,7 +12,9 @@ index.html
  └─ js/app.js         (módulo) → usa PROTOCOL y WORDS e importa:
      ├─ js/calidad.js    perfil "alta" o "baja" (Q)
      ├─ js/terreno.js    altura(x, z), cauce del río, terreno y agua
-     ├─ js/bosque.js     modelos .glb en InstancedMesh, pasto, partículas, colisiones
+     ├─ js/bosque.js     modelos .glb en InstancedMesh, pasto, flores, partículas, colisiones
+     ├─ js/vida.js       animales animados (AnimationMixer), mariposas y fogata
+     ├─ js/guia.js       guía de respiración: SVG en pantalla, lienzo en VR
      ├─ js/controles.js  clase Jugador: mouse/teclado, táctil y mandos VR
      └─ js/sonido.js     río, pájaros y acorde (Web Audio)
 ```
@@ -38,7 +40,7 @@ idle ──Comenzar──▶ countin (3 s) ──▶ running ──fin de tiempo
                                          done ──Quedarme──▶ free
 ```
 
-`phaseAt(t)` convierte los segundos transcurridos en `[fase, valor 0‥1, segundos restantes]` a partir de `PROTOCOL`. El valor pasa por `ease()` (coseno) y controla el tamaño del núcleo, el halo, el anillo y la luz del orbe. La sesión solo termina al final de una fase `rest`, para no cortar a mitad de una respiración.
+`phaseAt(t)` convierte los segundos transcurridos en `[fase, valor 0‥1, segundos restantes]` a partir de `PROTOCOL`. El valor pasa por `ease()` (coseno) y controla los pulmones y los brazos de la guía. La sesión solo termina al final de una fase `rest`, para no cortar a mitad de una respiración.
 
 ## Escena 3D
 
@@ -53,8 +55,18 @@ idle ──Comenzar──▶ countin (3 s) ──▶ running ──fin de tiempo
 | Pasto | `bosque.js` | Manojos de 9 hojas generados en código, en un `InstancedMesh` con color por ejemplar |
 | Viento | `bosque.js` | Uniforme `viento` compartido: el *vertex shader* mece el pasto y las copas según la altura de cada vértice |
 | Luciérnagas y polen | `bosque.js` | Dos `Points` con brillo aditivo que flotan alrededor de la cámara y reaparecen del otro lado si la persona se aleja |
-| `world` | `app.js` | Grupo con todo el escenario; se oculta en AR para que solo quede el orbe |
-| Orbe guía | `app.js` | Esfera + sprite con brillo + anillo + `PointLight`; sigue la mirada a 3 m con `lerp` suave |
+| Flores y hongos | `bosque.js` | Modelos de Kenney en `InstancedMesh`, en manchas por el prado y al pie de los árboles |
+| Animales | `vida.js` | Zorro, pájaro y pez de Quaternius, cada uno con su `AnimationMixer` y clonados con `SkeletonUtils.clone`. Los zorros pasean por el claro y se apartan si la persona se acerca, las bandadas giran sobre el río y los peces saltan cerca de la persona, con una onda en el agua y un chapoteo |
+| Mariposas | `vida.js` | Un solo `InstancedMesh`; el aleteo está en el *vertex shader* |
+| Fogata | `vida.js` | Troncos y piedras de Kenney, llamas (sprites aditivos), chispas (`Points`) y una `PointLight` que titila. Es un obstáculo para el jugador |
+| `world` | `app.js` | Grupo con todo el escenario; se oculta en AR para que solo quede la guía |
+
+## Guía de respiración (`guia.js`)
+
+- **Pantalla:** un panel (`#guia`) a la izquierda, centrado en vertical, con un SVG: cabeza, torso, dos brazos que giran desde el hombro y dos pulmones con tráquea. El valor de la respiración (0 = vacío, 1 = lleno, con la misma curva `ease()` de antes) escala los pulmones y gira los brazos hasta 150°. Debajo van los segundos que quedan y la frase `PROTOCOL.cuerpo[fase]`. Solo se ve durante la cuenta atrás y la sesión.
+- **Minimizar:** el botón **–** lo deja como un círculo de 74 px que sigue respirando; se abre de nuevo con un toque. La preferencia se guarda en `localStorage["respira-guia-min"]`.
+- **VR/AR:** el DOM no se ve dentro de las gafas, así que `crearGuiaXR` dibuja los mismos trazos (`Path2D` con las mismas cadenas SVG) en un `CanvasTexture`. Ese sprite flota a 2,2 m, girado 26° a la izquierda de la mirada y 45 cm por debajo de los ojos, para no tapar el frente.
+- `PROTOCOL.brazos = false` deja los brazos quietos para quien no deba levantarlos.
 
 ## Movimiento (`controles.js`)
 
@@ -73,13 +85,13 @@ Física sencilla: gravedad de 16 m/s², salto de 5,2 m/s y la altura del suelo s
 
 `Q` reúne todos los números que cuestan rendimiento: resolución, antialias, sombras, segmentos del terreno, cantidad de árboles, helechos, rocas y pasto, partículas, tipo de agua, densidad de la niebla y escala del framebuffer en XR. El perfil se elige así: `?calidad=` en la dirección → `localStorage["respira-calidad"]` → automático (*baja* si el puntero es táctil o el navegador es de celular o de gafas). Al cambiarlo se recarga la página, para no reconstruir la escena en caliente.
 
-En la prueba con Chromium headless (SwiftShader, sin GPU), el perfil *baja* dibuja unos 290 000 triángulos en 29 llamadas por cuadro. *Alta* suma unos 2 millones en 55 llamadas, contando la pasada de sombras y la del reflejo del agua. Pensado para la GPU de un computador.
+En la prueba con Chromium headless (SwiftShader, sin GPU), el perfil *baja* dibuja unos 320 000 triángulos en 56 llamadas por cuadro. *Alta* suma unos 2,2 millones en 129 llamadas, contando la pasada de sombras y la del reflejo del agua. Pensado para la GPU de un computador.
 
 ## Otras piezas
 
 | Sección | Qué hace |
 |---|---|
-| Sonido (`sonido.js`) | Río: ruido marrón grave + tres bandas de ruido con volumen y tono que oscilan (burbujeo). El volumen y el paneo dependen de la distancia y el lado del río. Pájaros: tres tipos de canto con osciladores, a intervalos al azar, con un eco corto. Acorde de senos que sube al inhalar |
+| Sonido (`sonido.js`) | Río: ruido marrón grave + tres bandas de ruido con volumen y tono que oscilan (burbujeo). El volumen y el paneo dependen de la distancia y el lado del río. Pájaros: tres tipos de canto con osciladores, cada 1–4 s, con un eco corto. Fogata: soplo grave + chasquidos al azar, más fuerte de cerca. Chapoteo cuando salta un pez. Acorde de senos que sube al inhalar |
 | Voz | `speechSynthesis` en español, con la primera voz `es-*` disponible |
 | Historial | `localStorage["respira-hist"]`, máx. 30 registros `{t, pre, post, min}` |
 | VR/AR | `navigator.xr.isSessionSupported` → `requestSession` con `local-floor` → `renderer.xr.setSession` |

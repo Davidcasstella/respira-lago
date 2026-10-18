@@ -86,10 +86,18 @@ function matriz(x, y, z, esc, giro, inclinar = 0) {
 // Lugares que no se llenan: el claro donde aparece la persona
 export const INICIO = new THREE.Vector3(rioX(6) + 11, 0, 6);
 const enClaro = (x, z, r) => Math.hypot(x - INICIO.x, z - INICIO.z) < r;
+// Fogata: un poco a la derecha y adelante de donde aparece la persona (mirando con YAW_INICIO)
+export const YAW_INICIO = 0.55;
+export const FOGATA = (() => {
+  const fx = -Math.sin(YAW_INICIO), fz = -Math.cos(YAW_INICIO), rx = Math.cos(YAW_INICIO), rz = -Math.sin(YAW_INICIO);
+  const x = INICIO.x + fx * 5.5 + rx * 3.2, z = INICIO.z + fz * 5.5 + rz * 3.2;
+  return new THREE.Vector3(x, altura(x, z), z);
+})();
+const cercaFogata = (x, z, r) => Math.hypot(x - FOGATA.x, z - FOGATA.z) < r;
 
 // Obstáculos (troncos de árboles y rocas grandes) en una rejilla para buscar rápido
 const CELDA = 4, rejilla = new Map();
-function obstaculo(x, z, r) {
+export function obstaculo(x, z, r) {
   const k = Math.floor(x / CELDA) + "," + Math.floor(z / CELDA);
   (rejilla.get(k) || rejilla.set(k, []).get(k)).push([x, z, r]);
 }
@@ -117,11 +125,12 @@ function repartir(n, radio, filtro) {
 }
 
 // Colores naturales para los modelos de Kenney (vienen en tonos de caricatura)
-const COLORES = { leafsDark: 0x22381f, leafsGreen: 0x34501f, woodBarkDark: 0x3d2c22, woodBark: 0x4a3626, woodInner: 0x8a6a4a, grass: 0x30461f, _defaultMat: 0x3b5424 };
+const COLORES = { leafsDark: 0x22381f, leafsGreen: 0x34501f, woodBarkDark: 0x3d2c22, woodBark: 0x4a3626, woodInner: 0x8a6a4a, grass: 0x30461f,
+  _defaultMat: 0xe9dcc4, colorRed: 0xd8453c, colorYellow: 0xf4c13a, colorPurple: 0x9b7ad8 };
 function naturalizar(partes) {
   for (const p of partes) {
-    const nombre = p.material.name, hoja = /leaf|grass|default/i.test(nombre);
-    const m = new THREE.MeshStandardMaterial({ color: COLORES[nombre] ?? 0x3b5424, roughness: hoja ? 0.85 : 0.95, metalness: 0 });
+    const nombre = p.material.name, hoja = /leaf|grass/i.test(nombre), flor = /^color/.test(nombre);
+    const m = new THREE.MeshStandardMaterial({ color: COLORES[nombre] ?? 0x3b5424, roughness: 1, metalness: 0, envMapIntensity: 0.45, emissive: flor ? COLORES[nombre] : 0, emissiveIntensity: flor ? 0.18 : 0 });
     m.userData.original = nombre;
     p.material = hoja ? conViento(m, 0.012) : m;
   }
@@ -131,11 +140,13 @@ function naturalizar(partes) {
 export async function crearBosque(Q, loader, alProgreso = () => {}) {
   const bosque = new THREE.Group(); bosque.name = "bosque";
   const M = "assets/modelos/";
-  const [pinoA, pinoB, hojaA, hojaB, arbusto, tronco, helecho, rocas] = await Promise.all([
+  const [pinoA, pinoB, hojaA, hojaB, arbusto, tronco, helecho, rocas, florA, florB, florC, hongos] = await Promise.all([
     "tree_pineTallA_detailed", "tree_pineDefaultA", "tree_pineRoundA", "tree_oak",
-    "plant_bushDetailed", "log", "fern_02", "rock_moss_set_01"
+    "plant_bushDetailed", "log", "fern_02", "rock_moss_set_01",
+    "flower_yellowA", "flower_redA", "flower_purpleA", "mushroom_redGroup"
   ].map(n => piezas(loader, M + n + ".glb").then(r => { alProgreso(); return r; })));
-  [pinoA, pinoB, hojaA, hojaB, arbusto, tronco].forEach(naturalizar);
+  [pinoA, pinoB, hojaA, hojaB, arbusto, tronco, florA, florB, florC, hongos].forEach(naturalizar);
+  obstaculo(FOGATA.x, FOGATA.z, 1.1);
 
   // Árboles: más densos lejos del río y en manchas, nunca en el agua ni en el claro
   const tipos = [
@@ -193,6 +204,13 @@ export async function crearBosque(Q, loader, alProgreso = () => {}) {
     .map(([x, z]) => matriz(x, altura(x, z) + 0.05, z, entre(4, 6), rnd() * 6.28));
   instanciar(bosque, tronco, lTr);
 
+  // Flores en manchas por el prado (más cerca del claro) y hongos al pie de los árboles
+  const flores = [florA, florB, florC];
+  const ptsFlor = repartir(Q.flores, 45, (x, z) => altura(x, z) > AGUA + 0.2 && !cercaFogata(x, z, 2) && !enClaro(x, z, 3) && ruido(x * 0.12 + 7, z * 0.12) > 0.45);
+  flores.forEach((f, i) => instanciar(bosque, f, ptsFlor.filter((_, j) => j % 3 === i).map(([x, z]) => matriz(x, altura(x, z) - 0.02, z, entre(0.9, 1.5), rnd() * 6.28, 0.15)), { sombra: false }));
+  const ptsHongo = ptsArboles.slice(0, Q.hongos).map(([x, z]) => { const a = rnd() * 6.28; return [x + Math.cos(a) * 0.9, z + Math.sin(a) * 0.9]; });
+  instanciar(bosque, hongos, ptsHongo.map(([x, z]) => matriz(x, altura(x, z) - 0.02, z, entre(1.2, 2), rnd() * 6.28)), { sombra: false });
+
   bosque.add(crearPasto(Q));
   return bosque;
 }
@@ -214,15 +232,16 @@ function manojoPasto() {
   return g;
 }
 function crearPasto(Q) {
-  const mat = conViento(new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: 0.9 }), 0.35);
+  // Lambert: mate y sin reflejos (el cielo al atardecer quemaba las puntas en blanco) y más barato en celulares
+  const mat = conViento(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), 0.35);
   const im = new THREE.InstancedMesh(manojoPasto(), mat, Q.pasto);
   const c = new THREE.Color(); let n = 0, intentos = Q.pasto * 4;
   while (n < Q.pasto && intentos-- > 0) {
     const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * Q.pastoRadio;
     const x = INICIO.x + Math.cos(a) * r, z = INICIO.z + Math.sin(a) * r, h = altura(x, z);
-    if (h < AGUA + 0.12 || ruido(x * 0.06, z * 0.06) > 0.7) continue;     // ni en el agua ni en la hojarasca
+    if (h < AGUA + 0.12 || ruido(x * 0.06, z * 0.06) > 0.7 || cercaFogata(x, z, 1.4)) continue;     // ni en el agua ni en la hojarasca
     im.setMatrixAt(n, matriz(x, h - 0.02, z, entre(0.7, 1.4), rnd() * 6.28, 0.12));
-    im.setColorAt(n, c.setHSL(0.17 + rnd() * 0.07, 0.35, 0.72 + rnd() * 0.2));
+    im.setColorAt(n, c.setHSL(0.17 + rnd() * 0.07, 0.4, 0.5 + rnd() * 0.18));
     n++;
   }
   im.count = n; im.receiveShadow = true; im.castShadow = false;

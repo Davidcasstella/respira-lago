@@ -17,9 +17,9 @@ Reglas para no romper nada:
 ## Los tiempos
 
 ```js
-inhale: 4,   // toma aire  (la luz crece)
+inhale: 4,   // toma aire  (los pulmones de la guía se llenan)
 hold:   1,   // sostiene con aire
-exhale: 6,   // suelta     (la luz se apaga)
+exhale: 6,   // suelta     (los pulmones se vacían)
 rest:   1,   // descansa sin aire
 ```
 
@@ -43,7 +43,7 @@ Son ejemplos de ritmos conocidos. El psicólogo decide cuál conviene en cada ca
 
 ```js
 cues: {
-  inhale: ["Toma aire", "Por la nariz, despacio, mientras la luz crece"],
+  inhale: ["Toma aire", "Por la nariz, despacio, mientras se llenan los pulmones"],
   hold:   ["Sostén", "Un instante"],
   exhale: ["Suelta", "Por la boca, más lento, deja ir la tensión"],
   rest:   ["Descansa", "Nota cómo se afloja el cuerpo"]
@@ -51,6 +51,22 @@ cues: {
 ```
 
 Cada fase tiene dos textos: **[título grande, frase pequeña]**. Conviene que el título sea corto (una o dos palabras), porque en VR se lee de lejos.
+
+## Los brazos y el cuerpo
+
+```js
+brazos: true,
+cuerpo: {
+  inhale: "Sube los brazos despacio, con las palmas hacia arriba, mientras llenas los pulmones",
+  hold:   "Brazos arriba, hombros sueltos",
+  exhale: "Baja los brazos poco a poco mientras sueltas el aire",
+  rest:   "Manos sobre el abdomen, nota cómo se mueve"
+}
+```
+
+La guía de respiración muestra una figura con unos pulmones que se llenan y se vacían al ritmo de las fases. Si `brazos` es `true`, la figura sube los brazos al tomar aire y los baja al soltarlo, y debajo aparece la frase de `cuerpo` de esa fase. Si un paciente no puede o no debe levantar los brazos, pon `brazos: false`: la figura deja los brazos quietos y debajo aparece la frase pequeña de `cues`.
+
+La persona puede minimizar la guía con el botón **–**. Queda como un círculo pequeño que sigue respirando, y se abre de nuevo con un toque.
 
 ## La voz guía
 

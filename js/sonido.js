@@ -59,7 +59,7 @@ function cantar() {
     const f = 3800 + Math.random() * 800;
     for (let i = 0; i < 9; i++) nota(t + i * 0.045, f, f * (i % 2 ? 0.92 : 1.05), 0.05, v * 0.7, pan, "triangle");
   }
-  temporizador = setTimeout(cantar, 1800 + Math.random() * 5500);
+  temporizador = setTimeout(cantar, 900 + Math.random() * 3200);   // un bosque con vida: cantos frecuentes
 }
 
 function crearPad() {
@@ -101,4 +101,41 @@ export function rioSonido(distancia, lado) {
   const v = 0.12 + 0.6 * Math.max(0, 1 - Math.max(0, distancia - 2) / 45);
   rioG.gain.setTargetAtTime(v, ac.currentTime, 0.3);
   if (rioPan.pan) rioPan.pan.setTargetAtTime(Math.max(-0.7, Math.min(0.7, lado * 0.7)), ac.currentTime, 0.3);
+}
+
+/* Fogata: chasquidos cortos de ruido agudo; su volumen depende de la distancia */
+let fuegoG = null, fuegoTimer = 0;
+function chasquido() {
+  if (!ac || !fuegoG) return;
+  const t = ac.currentTime + 0.02, n = 1 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    const s = ruido(0.08, false), hp = ac.createBiquadFilter(), g = ac.createGain(), tt = t + i * azar(0.02, 0.09);
+    hp.type = "bandpass"; hp.frequency.value = azar(1800, 4200); hp.Q.value = 0.8;
+    g.gain.setValueAtTime(azar(0.15, 0.5), tt); g.gain.exponentialRampToValueAtTime(0.001, tt + azar(0.02, 0.06));
+    s.connect(hp); hp.connect(g); g.connect(fuegoG); s.start(tt); s.stop(tt + 0.1);
+  }
+  fuegoTimer = setTimeout(chasquido, azar(60, 420));
+}
+const azar = (a, b) => a + Math.random() * (b - a);
+function crearFuego() {
+  fuegoG = ac.createGain(); fuegoG.gain.value = 0; fuegoG.connect(master);
+  // Soplo grave y continuo del fuego
+  const s = ruido(3, true), lp = ac.createBiquadFilter(), g = ac.createGain();
+  lp.type = "lowpass"; lp.frequency.value = 300; g.gain.value = 0.5; lfo(0.6, 0.2, g.gain);
+  s.connect(lp); lp.connect(g); g.connect(fuegoG); s.start();
+  chasquido();
+}
+export function fogataSonido(distancia) {
+  if (!ac) return;
+  if (!fuegoG) crearFuego();
+  fuegoG.gain.setTargetAtTime(0.5 * Math.max(0, 1 - distancia / 18) ** 2, ac.currentTime, 0.4);
+}
+
+/** Chapoteo de un pez: ruido corto que baja de tono. */
+export function salpicar() {
+  if (!ac) return;
+  const t = ac.currentTime + 0.01, s = ruido(0.4, false), bp = ac.createBiquadFilter(), g = ac.createGain();
+  bp.type = "bandpass"; bp.Q.value = 1.2; bp.frequency.setValueAtTime(1800, t); bp.frequency.exponentialRampToValueAtTime(500, t + 0.3);
+  g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+  s.connect(bp); bp.connect(g); g.connect(eco); s.start(t); s.stop(t + 0.4);
 }

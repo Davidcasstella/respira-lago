@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
-<canvas id="scene" aria-label="Escena de un bosque con un río al atardecer"></canvas>
+<canvas id="scene" aria-label="Escena de un bosque con un río, animales y una fogata al atardecer"></canvas>
 
 <!-- Inicio -->
 <div class="layer" id="start">
@@ -19,7 +19,7 @@
     <div class="card">
       <div class="eyebrow">Ejercicio para la ira · prototipo</div>
       <h1>Respira junto al <em>río</em></h1>
-      <p>Una luz te guía: crece cuando tomas aire y se apaga cuando lo sueltas. Sueltas el aire más lento de lo que lo tomas; eso ayuda al cuerpo a bajar la activación.</p>
+      <p>Una guía con unos pulmones te muestra cuándo tomar aire, cuándo soltarlo y qué hacer con los brazos. Sueltas el aire más lento de lo que lo tomas; eso ayuda al cuerpo a bajar la activación. Puedes minimizarla cuando quieras.</p>
       <div class="scale">
         <div class="q">¿Cuánta ira sientes ahora?</div>
         <div class="scale-row"><span class="scale-val" id="preVal">6</span><span class="scale-word" id="preWord">bastante</span></div>
@@ -59,10 +59,15 @@
 <div class="layer" id="session" hidden>
   <div class="hud-top">
     <div class="phase" id="phase">Prepárate</div>
-    <div class="phase-sub" id="phaseSub">Mira la luz sobre el agua</div>
+    <div class="phase-sub" id="phaseSub">Sigue la guía de los pulmones</div>
     <div class="progress"><i id="bar"></i></div>
     <div class="clock" id="clock">0:00</div>
   </div>
+  <aside class="guia" id="guia" aria-label="Guía de respiración">
+    <button class="guia-min" id="guiaMin" aria-expanded="true" aria-label="Minimizar la guía">–</button>
+    <div class="guia-lienzo"></div>
+    <div class="guia-txt"><b id="guiaFase"></b><span id="guiaCuerpo" aria-live="polite"></span></div>
+  </aside>
   <div class="spacer"></div>
   <div class="ayuda solo-raton" id="ayuda">Clic en la escena para mirar con el mouse</div>
   <div class="hud-bottom">
