@@ -3,14 +3,16 @@
 import * as THREE from "three";
 import { Sky } from "three/addons/objects/Sky.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { Q, nivel, guardarCalidad } from "./calidad.js";
-import { crearTerreno, crearAgua, rioX, distRio, AGUA } from "./terreno.js";
-import { crearBosque, crearParticulas, viento, INICIO, YAW_INICIO, FOGATA } from "./bosque.js";
-import { crearVida } from "./vida.js";
-import { crearGuia, crearGuiaXR } from "./guia.js";
-import { Jugador } from "./controles.js";
-import * as sonido from "./sonido.js";
-import { iniciarSonido, sonidoEncendido, haySonido, faseSonido, rioSonido, fogataSonido } from "./sonido.js";
+import { Q, nivel, guardarCalidad } from "./config/calidad.js";
+import { crearTerreno, crearAgua, rioX, distRio, AGUA } from "./escena/terreno.js";
+import { crearBosque, crearParticulas, viento, INICIO, YAW_INICIO, FOGATA } from "./escena/bosque.js";
+import { crearVida } from "./escena/vida.js";
+import { crearGuia, crearGuiaXR } from "./sesion/guia.js";
+import { faseEn, suavizar, formatoTiempo } from "./sesion/respiracion.js";
+import { Jugador } from "./controles/controles.js";
+import { iniciarSonido, sonidoEncendido, haySonido, faseSonido, rioSonido, fogataSonido, salpicar } from "./audio/sonido.js";
+import { decir, vozActiva, activarVoz, callarVoz } from "./audio/voz.js";
+import { historial } from "./servicios/historial.js";
 
 /* ===== Escena ===== */
 const canvas = document.getElementById("scene");
@@ -68,7 +70,7 @@ let piezasListas = 0, vida = null;
 const avisoCarga = () => { const p = Math.round(piezasListas / 12 * 100); $("carga").textContent = p < 100 ? `Cargando el bosque… ${p} %` : ""; };
 const gltf = new GLTFLoader(manager);
 crearBosque(Q, gltf, () => { piezasListas++; avisoCarga(); })
-  .then(b => { world.add(b); return crearVida(Q, gltf, sonido); })
+  .then(b => { world.add(b); return crearVida(Q, gltf, { salpicar }); })
   .then(v => { vida = v; world.add(v); $("carga").textContent = ""; document.body.dataset.listo = "1"; })
   .catch(e => { console.warn("No se pudo cargar el bosque", e); $("carga").textContent = "No se pudieron cargar los árboles o los animales; el ejercicio funciona igual."; document.body.dataset.listo = "1"; });
 
@@ -97,27 +99,8 @@ jugador.alCambiar = () => {
 };
 jugador.alCambiar();
 
-/* ===== Voz guía ===== */
-let voiceOn = true, esVoice = null;
-function pickVoice() { const v = speechSynthesis?.getVoices?.() || []; esVoice = v.find(x => /^es/i.test(x.lang)) || null; }
-if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function say(t) {
-  if (!voiceOn || !("speechSynthesis" in window)) return;
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = "es-ES"; if (esVoice) u.voice = esVoice; u.rate = 0.85; u.pitch = 0.9; u.volume = 0.8; speechSynthesis.speak(u); } catch (e) {}
-}
-
 /* ===== Sesión de respiración ===== */
 let state = "idle", sessionLen = 180, tStart = 0, lastPhase = "", preScore = 6, wakeLock = null;
-const cycle = PROTOCOL.inhale + PROTOCOL.hold + PROTOCOL.exhale + PROTOCOL.rest;
-function phaseAt(t) {
-  let c = t % cycle;
-  if (c < PROTOCOL.inhale) return ["inhale", c / PROTOCOL.inhale, PROTOCOL.inhale - c];
-  c -= PROTOCOL.inhale; if (c < PROTOCOL.hold) return ["hold", 1, PROTOCOL.hold - c];
-  c -= PROTOCOL.hold; if (c < PROTOCOL.exhale) return ["exhale", 1 - c / PROTOCOL.exhale, PROTOCOL.exhale - c];
-  c -= PROTOCOL.exhale; return ["rest", 0, PROTOCOL.rest - c];
-}
-const ease = x => 0.5 - 0.5 * Math.cos(Math.PI * x);
-function fmt(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
 
 function bindScale(inp, val, word) {
   const f = () => { val.textContent = inp.value; word.textContent = WORDS[+inp.value]; };
@@ -149,12 +132,12 @@ async function begin() {
   state = "countin"; tStart = performance.now() / 1000 + 3; lastPhase = "";
   show("session"); $("phase").textContent = "Prepárate"; $("phaseSub").textContent = "Siéntate o párate cómodo. Empezamos en 3 segundos";
   guia.preparar(PROTOCOL.brazos === false ? "Hombros sueltos, mirada suave" : "Brazos relajados a los lados del cuerpo");
-  say("Ponte cómodo. Vamos a respirar juntos.");
+  decir("Ponte cómodo. Vamos a respirar juntos.");
   try { wakeLock = await navigator.wakeLock?.request("screen"); } catch (e) {}
 }
 function finish() {
-  state = "done"; try { speechSynthesis.cancel(); } catch (e) {}
-  say("Muy bien. Tómate un momento antes de volver.");
+  state = "done"; callarVoz();
+  decir("Muy bien. Tómate un momento antes de volver.");
   $("post").value = Math.max(0, preScore - 2); $("post").dispatchEvent(new Event("input"));
   $("resultBox").hidden = true; $("save").hidden = false; renderHistory();
   show("end"); try { wakeLock?.release(); } catch (e) {}
@@ -162,23 +145,21 @@ function finish() {
 $("go").addEventListener("click", begin);
 $("endT").addEventListener("click", finish);
 $("soundT").addEventListener("click", e => { const on = !haySonido(); sonidoEncendido(on); e.currentTarget.setAttribute("aria-pressed", on); });
-$("voiceT").addEventListener("click", e => { voiceOn = !voiceOn; if (!voiceOn) try { speechSynthesis.cancel(); } catch (x) {} e.currentTarget.setAttribute("aria-pressed", voiceOn); });
+$("voiceT").addEventListener("click", e => { activarVoz(!vozActiva()); e.currentTarget.setAttribute("aria-pressed", vozActiva()); });
 $("again").addEventListener("click", () => { $("pre").value = $("post").value; $("pre").dispatchEvent(new Event("input")); state = "idle"; show("start"); });
 $("stay").addEventListener("click", () => { state = "free"; show("session"); $("phase").textContent = "Libre"; $("phaseSub").textContent = "Camina por el bosque. Toca Terminar cuando quieras"; $("bar").style.width = "100%"; $("clock").textContent = ""; });
 
-function loadHist() { try { return JSON.parse(localStorage.getItem("respira-hist") || "[]"); } catch (e) { return []; } }
 function renderHistory() {
-  const h = loadHist().slice(-4).reverse();
+  const h = historial.ultimas(4), n = v => Number(v) || 0;   // solo números: el historial viene de localStorage
   $("history").innerHTML = h.length ? "<div style='border:0'><span>Sesiones anteriores</span><span>antes → después</span></div>" + h.map(r =>
-    `<div><span>${new Date(r.t).toLocaleDateString("es-CO", { day: "numeric", month: "short" })} · ${r.min} min</span><span>${r.pre} → ${r.post}</span></div>`).join("") : "";
+    `<div><span>${new Date(n(r.t)).toLocaleDateString("es-CO", { day: "numeric", month: "short" })} · ${n(r.min)} min</span><span>${n(r.pre)} → ${n(r.post)}</span></div>`).join("") : "";
 }
 $("save").addEventListener("click", () => {
   const post = +$("post").value, diff = preScore - post;
   $("rFrom").textContent = preScore; $("rTo").textContent = post;
   $("rText").textContent = diff > 0 ? `Bajó ${diff} ${diff === 1 ? "punto" : "puntos"}. Tu cuerpo respondió a la respiración.`
     : diff === 0 ? "Se mantuvo igual. A veces toma más de una sesión; puedes repetir." : "Subió un poco. Vale la pena comentarlo con tu psicólogo.";
-  const h = loadHist(); h.push({ t: Date.now(), pre: preScore, post, min: Math.round(sessionLen / 60) });
-  try { localStorage.setItem("respira-hist", JSON.stringify(h.slice(-30))); } catch (e) {}
+  historial.guardar({ pre: preScore, post, min: Math.round(sessionLen / 60) });
   $("resultBox").hidden = false; $("save").hidden = true; renderHistory();
 });
 
@@ -228,14 +209,14 @@ renderer.setAnimationLoop(() => {
     if (t < 0) { $("clock").textContent = "Empieza en " + Math.ceil(-t); $("guiaFase").textContent = Math.ceil(-t); }
     else {
       state = "running";
-      const [ph, v, left] = phaseAt(t); breath = ease(v);
+      const [ph, v, left] = faseEn(t, PROTOCOL); breath = suavizar(v);
       if (ph !== lastPhase) {
         lastPhase = ph; $("phase").textContent = PROTOCOL.cues[ph][0]; $("phaseSub").textContent = PROTOCOL.cues[ph][1];
-        if (PROTOCOL.voice[ph]) say(PROTOCOL.voice[ph]);
+        if (PROTOCOL.voice[ph]) decir(PROTOCOL.voice[ph]);
         faseSonido(ph, ph === "inhale" ? PROTOCOL.inhale : PROTOCOL.exhale);
       }
       $("bar").style.width = Math.min(100, t / sessionLen * 100) + "%";
-      $("clock").textContent = fmt(sessionLen - t) + " restantes · " + Math.ceil(left) + " s";
+      $("clock").textContent = formatoTiempo(sessionLen - t) + " restantes · " + Math.ceil(left) + " s";
       guia.actualizar(ph, breath, PROTOCOL.brazos !== false);
       $("guiaFase").textContent = Math.ceil(left) + " s";
       if (t >= sessionLen && ph === "rest") finish();

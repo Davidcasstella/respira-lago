@@ -1,0 +1,21 @@
+name: Proponer una mejora
+description: Una idea nueva para el ejercicio o la escena
+labels: ["mejora"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: La idea
+      description: Qué te gustaría que hiciera y para quién (paciente, psicólogo…).
+    validations:
+      required: true
+  - type: textarea
+    id: por-que
+    attributes:
+      label: Por qué ayuda
+  - type: checkboxes
+    id: clinico
+    attributes:
+      label: Contenido terapéutico
+      options:
+        - label: Cambia tiempos, frases o el protocolo y necesita el visto bueno del psicólogo

@@ -1,6 +1,6 @@
 /* ===== Sonido ambiente sintetizado: río, pájaros y un acorde que acompaña la respiración =====
    No usa archivos de audio: todo se genera con Web Audio en el navegador. */
-let ac = null, master, rioG, rioPan, pad, encendido = true, temporizador = 0;
+let ac = null, master, rioG, rioPan, pad, encendido = true;
 
 function ruido(seg, marron) {
   const n = ac.sampleRate * seg, b = ac.createBuffer(2, n, ac.sampleRate);
@@ -59,7 +59,7 @@ function cantar() {
     const f = 3800 + Math.random() * 800;
     for (let i = 0; i < 9; i++) nota(t + i * 0.045, f, f * (i % 2 ? 0.92 : 1.05), 0.05, v * 0.7, pan, "triangle");
   }
-  temporizador = setTimeout(cantar, 900 + Math.random() * 3200);   // un bosque con vida: cantos frecuentes
+  setTimeout(cantar, 900 + Math.random() * 3200);   // un bosque con vida: cantos frecuentes
 }
 
 function crearPad() {
@@ -77,7 +77,7 @@ export function iniciarSonido() {
     master = ac.createGain(); master.gain.value = 0; master.connect(ac.destination);
     master.gain.linearRampToValueAtTime(encendido ? 0.9 : 0, ac.currentTime + 3);
     crearRio(); crearEco(); crearPad();
-    temporizador = setTimeout(cantar, 1200);
+    setTimeout(cantar, 1200);
   } catch (e) { ac = null; }
 }
 
@@ -104,7 +104,7 @@ export function rioSonido(distancia, lado) {
 }
 
 /* Fogata: chasquidos cortos de ruido agudo; su volumen depende de la distancia */
-let fuegoG = null, fuegoTimer = 0;
+let fuegoG = null;
 function chasquido() {
   if (!ac || !fuegoG) return;
   const t = ac.currentTime + 0.02, n = 1 + Math.floor(Math.random() * 3);
@@ -114,7 +114,7 @@ function chasquido() {
     g.gain.setValueAtTime(azar(0.15, 0.5), tt); g.gain.exponentialRampToValueAtTime(0.001, tt + azar(0.02, 0.06));
     s.connect(hp); hp.connect(g); g.connect(fuegoG); s.start(tt); s.stop(tt + 0.1);
   }
-  fuegoTimer = setTimeout(chasquido, azar(60, 420));
+  setTimeout(chasquido, azar(60, 420));
 }
 const azar = (a, b) => a + Math.random() * (b - a);
 function crearFuego() {

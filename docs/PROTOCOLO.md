@@ -1,13 +1,14 @@
 # Guía del protocolo (para el psicólogo)
 
-Esta guía explica cómo cambiar el ejercicio **sin saber programar**. Todo se hace en un solo archivo: [`js/protocolo.js`](../js/protocolo.js).
+Esta guía explica cómo cambiar el ejercicio **sin saber programar**. Todo se hace en un solo archivo: [`frontend/js/protocolo.js`](../frontend/js/protocolo.js).
 
 ## Editarlo desde GitHub
 
-1. Abre el archivo `js/protocolo.js` en GitHub.
+1. Abre el archivo `frontend/js/protocolo.js` en GitHub.
 2. Toca el ícono del lápiz (**Edit this file**).
 3. Cambia solo los números o los textos que están entre comillas.
-4. Abajo, toca **Commit changes**. Si la página está publicada en GitHub Pages, se actualiza en uno o dos minutos.
+4. Abajo, toca **Commit changes**. GitHub revisa solo el archivo (pestaña *Actions*): si quedó una coma o comilla mal puesta, aparece una ✗ roja y, al abrirla, se ve en qué línea está el error.
+5. Si el sitio está publicado, se actualiza en uno o dos minutos.
 
 Reglas para no romper nada:
 - Los textos van siempre entre comillas: `"Toma aire"`.
@@ -89,4 +90,4 @@ Son las palabras que acompañan cada número de 0 a 10, en orden. Deben ser **ex
 
 ## Frases fijas
 
-Algunas frases están en `index.html` y `js/app.js`: el saludo inicial ("Ponte cómodo. Vamos a respirar juntos."), el cierre ("Muy bien. Tómate un momento antes de volver.") y los mensajes del resultado. Si quieres cambiarlas, pídeselo al desarrollador o búscalas con *Ctrl+F* en esos archivos.
+Algunas frases están en `frontend/index.html` y `frontend/js/app.js`: el saludo inicial ("Ponte cómodo. Vamos a respirar juntos."), el cierre ("Muy bien. Tómate un momento antes de volver.") y los mensajes del resultado. Si quieres cambiarlas, pídeselo al desarrollador o búscalas con *Ctrl+F* en esos archivos.

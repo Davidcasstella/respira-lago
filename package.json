@@ -1,0 +1,29 @@
+{
+  "name": "respira-lago",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Ejercicio de respiración guiada en 3D para manejar la ira (navegador, celular y VR/AR).",
+  "type": "module",
+  "workspaces": [
+    "backend"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node scripts/servir.mjs",
+    "backend": "npm run start -w backend",
+    "lint": "eslint .",
+    "test": "node --test tests/*.test.js && npm test -w backend",
+    "test:navegador": "node scripts/prueba-navegador.mjs",
+    "build:archivo": "node scripts/empaquetar.mjs",
+    "verificar": "npm run lint && npm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.39.5",
+    "globals": "^15.15.0",
+    "playwright": "^1.56.1"
+  }
+}

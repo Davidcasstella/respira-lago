@@ -1,0 +1,16 @@
+{
+  "name": "@respira/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API de Respira (esqueleto). Aún no guarda datos reales de pacientes.",
+  "type": "module",
+  "main": "src/servidor.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/servidor.js",
+    "dev": "node --watch src/servidor.js",
+    "test": "node --test"
+  }
+}

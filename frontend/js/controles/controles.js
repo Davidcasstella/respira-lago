@@ -3,8 +3,8 @@
    W A S D caminar · Shift correr · Espacio saltar · F volar (en vuelo: Espacio sube, Ctrl o C baja). */
 import * as THREE from "three";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
-import { altura, AGUA, LIMITE } from "./terreno.js";
-import { colisionar } from "./bosque.js";
+import { altura, AGUA, LIMITE } from "../escena/terreno.js";
+import { colisionar } from "../escena/bosque.js";
 
 const CAMINAR = 2.4, CORRER = 5.5, VOLAR = 8, VOLAR_RAPIDO = 18, VR_PASO = 1.4;
 const GRAVEDAD = 16, SALTO = 5.2, OJOS = 1.6, RADIO = 0.3, TECHO = 70;

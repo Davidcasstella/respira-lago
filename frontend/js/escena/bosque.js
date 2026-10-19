@@ -77,7 +77,7 @@ function instanciar(grupo, partes, matrices, { sombra = true, recibe = true, var
   }
 }
 
-const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
+const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
 function matriz(x, y, z, esc, giro, inclinar = 0) {
   _e.set(entre(-inclinar, inclinar), giro, entre(-inclinar, inclinar));
   return new THREE.Matrix4().compose(_p.set(x, y, z), _q.setFromEuler(_e), _s.setScalar(esc));

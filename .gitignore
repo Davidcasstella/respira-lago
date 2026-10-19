@@ -1,0 +1,21 @@
+# Dependencias y compilados
+node_modules/
+dist/
+
+# Variables de entorno con secretos (usa .env.example como plantilla)
+.env
+.env.*
+!.env.example
+
+# Resultados de pruebas y capturas temporales
+test-results/
+capturas/
+*.log
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.vercel

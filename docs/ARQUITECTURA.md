@@ -1,25 +1,28 @@
 # Arquitectura (para desarrolladores)
 
-Proyecto estático: HTML, CSS y JavaScript sin frameworks ni compilación. La única librería es **Three.js r170** (`three@0.170.0`), que se carga con un *import map* desde jsdelivr con la versión exacta. De sus ejemplos oficiales (`examples/jsm`) se usan `Sky`, `Water`, `PointerLockControls` y `GLTFLoader`. Necesita un servidor (aunque sea `python3 -m http.server`), porque los módulos ES no cargan desde `file://`.
+Proyecto estático: HTML, CSS y JavaScript sin frameworks ni compilación. La única librería es **Three.js r170** (`three@0.170.0`), que se carga con un *import map* desde jsdelivr con la versión exacta. De sus ejemplos oficiales (`examples/jsm`) se usan `Sky`, `Water`, `PointerLockControls` y `GLTFLoader`. Necesita un servidor (`npm run dev`), porque los módulos ES no cargan desde `file://`. Las reglas de organización están en [BUENAS-PRACTICAS.md](BUENAS-PRACTICAS.md).
 
 ## Orden de carga
 
 ```
-index.html
+frontend/index.html
  ├─ css/estilos.css
  ├─ <script type="importmap">  "three" y "three/addons/" → jsdelivr, three@0.170.0
  ├─ js/protocolo.js   (script clásico) → define PROTOCOL y WORDS (globales)
  └─ js/app.js         (módulo) → usa PROTOCOL y WORDS e importa:
-     ├─ js/calidad.js    perfil "alta" o "baja" (Q)
-     ├─ js/terreno.js    altura(x, z), cauce del río, terreno y agua
-     ├─ js/bosque.js     modelos .glb en InstancedMesh, pasto, flores, partículas, colisiones
-     ├─ js/vida.js       animales animados (AnimationMixer), mariposas y fogata
-     ├─ js/guia.js       guía de respiración: SVG en pantalla, lienzo en VR
-     ├─ js/controles.js  clase Jugador: mouse/teclado, táctil y mandos VR
-     └─ js/sonido.js     río, pájaros y acorde (Web Audio)
+     ├─ config/calidad.js       perfil "alta" o "baja" (Q)
+     ├─ escena/terreno.js       altura(x, z), cauce del río, terreno y agua
+     ├─ escena/bosque.js        modelos .glb en InstancedMesh, pasto, flores, partículas, colisiones
+     ├─ escena/vida.js          animales animados (AnimationMixer), mariposas y fogata
+     ├─ sesion/respiracion.js   ritmo: faseEn(t, protocolo), suavizar, formatoTiempo (puras, con pruebas)
+     ├─ sesion/guia.js          guía de respiración: SVG en pantalla, lienzo en VR
+     ├─ controles/controles.js  clase Jugador: mouse/teclado, táctil y mandos VR
+     ├─ audio/sonido.js         río, pájaros, fogata y acorde (Web Audio)
+     ├─ audio/voz.js            voz guía (Web Speech)
+     └─ servicios/historial.js  historial de sesiones (localStorage; punto de conexión con backend/)
 ```
 
-`js/protocolo.js` sigue siendo un script clásico y el único archivo que edita el psicólogo. Sus `const` de primer nivel son globales y el módulo `app.js` las lee directamente.
+`frontend/js/protocolo.js` sigue siendo un script clásico y el único archivo que edita el psicólogo. Sus `const` de primer nivel son globales y el módulo `app.js` las lee directamente.
 
 ## Pantallas
 
@@ -40,7 +43,7 @@ idle ──Comenzar──▶ countin (3 s) ──▶ running ──fin de tiempo
                                          done ──Quedarme──▶ free
 ```
 
-`phaseAt(t)` convierte los segundos transcurridos en `[fase, valor 0‥1, segundos restantes]` a partir de `PROTOCOL`. El valor pasa por `ease()` (coseno) y controla los pulmones y los brazos de la guía. La sesión solo termina al final de una fase `rest`, para no cortar a mitad de una respiración.
+`faseEn(t, PROTOCOL)` (en `sesion/respiracion.js`) convierte los segundos transcurridos en `[fase, valor 0‥1, segundos restantes]` a partir de `PROTOCOL`. El valor pasa por `suavizar()` (coseno) y controla los pulmones y los brazos de la guía. La sesión solo termina al final de una fase `rest`, para no cortar a mitad de una respiración.
 
 ## Escena 3D
 
@@ -92,8 +95,8 @@ En la prueba con Chromium headless (SwiftShader, sin GPU), el perfil *baja* dibu
 | Sección | Qué hace |
 |---|---|
 | Sonido (`sonido.js`) | Río: ruido marrón grave + tres bandas de ruido con volumen y tono que oscilan (burbujeo). El volumen y el paneo dependen de la distancia y el lado del río. Pájaros: tres tipos de canto con osciladores, cada 1–4 s, con un eco corto. Fogata: soplo grave + chasquidos al azar, más fuerte de cerca. Chapoteo cuando salta un pez. Acorde de senos que sube al inhalar |
-| Voz | `speechSynthesis` en español, con la primera voz `es-*` disponible |
-| Historial | `localStorage["respira-hist"]`, máx. 30 registros `{t, pre, post, min}` |
+| Voz (`audio/voz.js`) | `speechSynthesis` en español, con la primera voz `es-*` disponible |
+| Historial | `servicios/historial.js`: `localStorage["respira-hist"]`, máx. 30 registros `{t, pre, post, min}`. Es el único módulo que toca esos datos, para conectarlo luego con `backend/` |
 | VR/AR | `navigator.xr.isSessionSupported` → `requestSession` con `local-floor` → `renderer.xr.setSession` |
 | Depuración | `window.respira` expone `scene`, `camera`, `rig`, `jugador`, `renderer` y el estado, para las pruebas automáticas |
 
@@ -109,7 +112,15 @@ El bucle usa `renderer.setAnimationLoop`, que es obligatorio para WebXR: el viso
 
 ## Pruebas
 
-Se probó con Playwright en Chromium headless, en escritorio (1280×800) y celular (Pixel 7 emulado), en ambas calidades: carga sin errores de consola ni peticiones fallidas, caminar, correr, saltar, volar, joystick, arrastrar para mirar, botones táctiles, sesión completa con escala antes y después, historial y aviso de VR no disponible. Las capturas de `docs/` salen de esas pruebas.
+| Qué | Dónde | Comando |
+|---|---|---|
+| Ritmo de respiración y forma de `protocolo.js` | `tests/respiracion.test.js` | `npm test` |
+| API (rutas, validación, límites) | `backend/test/api.test.js` | `npm test` |
+| App completa en Chromium (escritorio y celular): carga sin errores, guía, movimiento, minimizar, guardar sesión | `scripts/prueba-navegador.mjs` | `npm run test:navegador` |
+
+GitHub Actions (`.github/workflows/ci.yml`) corre lint, pruebas y la prueba en navegador en cada pull request, y guarda las capturas como artefacto.
+
+Además, a mano, se probó con Playwright en Chromium headless, en escritorio (1280×800) y celular (Pixel 7 emulado), en ambas calidades: carga sin errores de consola ni peticiones fallidas, caminar, correr, saltar, volar, joystick, arrastrar para mirar, botones táctiles, sesión completa con escala antes y después, historial y aviso de VR no disponible. Las capturas de `docs/` salen de esas pruebas.
 
 ## Ideas para crecer
 

@@ -47,63 +47,77 @@ En la pantalla de inicio hay un selector **Alta / Baja**. La primera vez se elig
 
 ## Probarlo en tu computador
 
-No necesita instalación ni compilación; son archivos estáticos.
+El sitio es estático (sin compilación). Solo hace falta [Node.js](https://nodejs.org) 20 o superior.
 
 ```bash
 git clone https://github.com/Davidcasstella/respira-lago.git
 cd respira-lago
-python3 -m http.server 8000
+npm install        # herramientas de desarrollo (una sola vez)
+npm run dev        # abre http://localhost:8000
 ```
 
-Abre `http://localhost:8000`. Hace falta un servidor local: si se abre `index.html` con doble clic, el navegador bloquea los módulos de JavaScript y las texturas.
+Sin Node también funciona: `python3 -m http.server 8000 -d frontend`. Si abres `frontend/index.html` con doble clic, el navegador bloquea los módulos y las texturas. Para un archivo que sí abre con doble clic: `npm run build:archivo` → `dist/respira-bosque.html`.
 
-Para probar en el celular dentro de la misma red Wi‑Fi, abre `http://IP-DE-TU-PC:8000`. Ten en cuenta que **VR y AR exigen https**, así que para las gafas usa la versión publicada (siguiente sección).
+Para probar en el celular dentro de la misma red Wi‑Fi, abre `http://IP-DE-TU-PC:8000`. **VR y AR exigen https**, así que para las gafas usa la versión publicada (siguiente sección).
 
-## Publicarlo gratis (GitHub Pages)
+### Comandos
 
-1. En el repositorio ve a **Settings → Pages**.
-2. En *Source* elige **Deploy from a branch**, rama `progra-2` (la rama de este repo), carpeta `/ (root)`, y guarda.
-3. En uno o dos minutos queda en `https://davidcasstella.github.io/respira-lago/`.
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Sirve `frontend/` en http://localhost:8000 |
+| `npm run backend` | Arranca la API de ejemplo en http://localhost:3000 |
+| `npm run verificar` | Lint + pruebas unitarias (frontend y backend) |
+| `npm run test:navegador` | Prueba la app en Chromium, en escritorio y celular |
+| `npm run build:archivo` | Genera un solo HTML con todo adentro |
 
-Ese enlace ya es https, así que en unas gafas Meta Quest basta con abrirlo en su navegador y tocar **Ver en gafas (VR)**.
+## Publicarlo gratis
 
-> Este repositorio es **público**, así que GitHub Pages es gratis. Si algún día lo vuelves privado, necesitarías GitHub Pro, o puedes publicar la carpeta en **Netlify** o **Vercel** (arrastrar y soltar, también gratis).
+La carpeta que se publica es **`frontend/`**.
+
+- **Vercel:** *Add New → Project* → elige este repo. `vercel.json` ya le dice que publique `frontend/` sin compilar. Cada push actualiza el sitio.
+- **GitHub Pages:** en **Settings → Pages**, *Source*: **GitHub Actions**. Luego, en la pestaña **Actions**, ejecuta **"Publicar en GitHub Pages"**. Queda en `https://davidcasstella.github.io/respira-lago/`.
+
+Los dos enlaces son https, así que en unas gafas Meta Quest basta con abrirlo en su navegador y tocar **Ver en gafas (VR)**.
 
 ## Estructura del proyecto
 
 ```
 respira-lago/
-├── index.html          Página: pantallas de inicio, sesión y cierre
-├── css/estilos.css     Colores, tipografía y diseño de las pantallas
-├── js/protocolo.js     ← Contenido terapéutico: tiempos y frases (lo edita el psicólogo)
-├── js/app.js           Escena, cielo y luces, sesión, voz, VR/AR y bucle principal
-├── js/calidad.js       Perfiles de calidad alta y baja
-├── js/terreno.js       Relieve, cauce del río y agua
-├── js/bosque.js        Árboles, helechos, rocas, flores, hongos y pasto (InstancedMesh), luciérnagas y polen
-├── js/vida.js          Zorros, pájaros, peces, mariposas y la fogata
-├── js/guia.js          Guía de respiración: pulmones y brazos (pantalla y VR)
-├── js/controles.js     Mouse y teclado, joystick táctil y mandos de VR
-├── js/sonido.js        Río, pájaros, fogata, chapoteos y acorde sintetizados
-├── assets/             Texturas, modelos .glb y CREDITOS.md (fuente y licencia de cada uno)
-└── docs/
-    ├── PROTOCOLO.md     Guía para ajustar el ejercicio sin saber programar
-    ├── VR-AR.md         Qué es XR, VR y AR, y qué dispositivos sirven
-    └── ARQUITECTURA.md  Cómo está hecho por dentro, para desarrolladores
+├── frontend/                  Sitio web que se publica
+│   ├── index.html             Pantallas de inicio, sesión y cierre
+│   ├── css/estilos.css        Colores, tipografía y diseño
+│   ├── js/
+│   │   ├── protocolo.js       ← Contenido terapéutico (lo edita el psicólogo)
+│   │   ├── app.js             Arranque: escena, pantallas, sesión, VR/AR y bucle
+│   │   ├── config/            calidad.js: perfiles alta y baja
+│   │   ├── escena/            terreno.js (relieve, río), bosque.js (plantas, rocas), vida.js (animales, fogata)
+│   │   ├── controles/         controles.js: mouse, teclado, táctil y mandos VR
+│   │   ├── audio/             sonido.js (ambiente) y voz.js (voz guía)
+│   │   ├── sesion/            respiracion.js (ritmo) y guia.js (pulmones y brazos)
+│   │   └── servicios/         historial.js: guarda las sesiones (hoy en el navegador)
+│   └── assets/                Texturas, modelos .glb y CREDITOS.md
+├── backend/                   API de ejemplo (Node, sin dependencias), aún sin datos reales
+├── tests/                     Pruebas unitarias del frontend
+├── scripts/                   Servidor local, prueba en navegador y empaquetado
+├── docs/                      Documentación (protocolo, VR/AR, arquitectura, buenas prácticas)
+└── .github/                   CI, plantillas de issues y PR, Dependabot
 ```
+
+Cómo trabajar en el repo sin acumular deuda técnica: [CONTRIBUTING.md](CONTRIBUTING.md) y [docs/BUENAS-PRACTICAS.md](docs/BUENAS-PRACTICAS.md).
 
 ## Ajustar el ejercicio
 
-Todo lo terapéutico está en un solo archivo, [`js/protocolo.js`](js/protocolo.js): segundos de cada fase, textos en pantalla, frases de la voz y palabras de la escala. Para cambiar el ritmo a 4‑7‑8, por ejemplo, se cambian tres números. La guía paso a paso está en [docs/PROTOCOLO.md](docs/PROTOCOLO.md).
+Todo lo terapéutico está en un solo archivo, [`frontend/js/protocolo.js`](frontend/js/protocolo.js): segundos de cada fase, textos en pantalla, frases de la voz y palabras de la escala. Para cambiar el ritmo a 4‑7‑8, por ejemplo, se cambian tres números. La guía paso a paso está en [docs/PROTOCOLO.md](docs/PROTOCOLO.md).
 
 ## Tecnología
 
 - **[Three.js](https://threejs.org/) r170** (`three@0.170.0`), cargado con *import map* desde jsdelivr: escena 3D y WebXR (VR/AR). De sus ejemplos oficiales se usan `Sky`, `Water`, `PointerLockControls` y `GLTFLoader`.
-- **Recursos CC0** de [Poly Haven](https://polyhaven.com) y [Kenney](https://kenney.nl): texturas de 1K y modelos `.glb` pequeños (unos 2,4 MB en total). Detalle en [assets/CREDITOS.md](assets/CREDITOS.md).
+- **Recursos CC0** de [Poly Haven](https://polyhaven.com) y [Kenney](https://kenney.nl): texturas de 1K y modelos `.glb` pequeños (unos 2,4 MB en total). Detalle en [frontend/assets/CREDITOS.md](frontend/assets/CREDITOS.md).
 - **Animales CC0** de [Quaternius](https://quaternius.com) (zorro, pájaro y pez con su animación), convertidos a `.glb`.
 - **Web Audio API:** el río, los pájaros, la fogata y el acorde de fondo se sintetizan en el navegador, sin archivos de audio.
 - **Web Speech API:** voz guía en español con la voz que tenga instalada el dispositivo.
 - **localStorage:** historial local de sesiones.
-- Sin frameworks, sin compilación y sin servidor propio.
+- Sin frameworks ni compilación en el frontend. El backend es un esqueleto en Node sin dependencias (ver [backend/README.md](backend/README.md)).
 
 Todo está en **escala real (metros)**: los ojos a 1,6 m de altura. Por eso la misma escena funciona en las gafas sin rehacerla. En VR se camina despacio (1,4 m/s), se gira por pasos y no se puede correr, saltar ni volar, para no causar mareo.
 
@@ -118,13 +132,13 @@ Todo está en **escala real (metros)**: los ojos a 1,6 m de altura. Por eso la m
 - **iPhone/iPad:** Safari no soporta WebXR. Funciona en modo navegador (mirar y moverse con el dedo), pero sin VR ni AR.
 - Apple Vision Pro tiene soporte WebXR limitado; hay que probarlo en el dispositivo.
 - En VR los mandos solo sirven para moverse: la sesión arranca sola al entrar y la escala se responde fuera de las gafas.
-- Los árboles son modelos *low-poly* (Kenney) con colores naturales, elegidos para que el bosque corra en celulares y en Quest. Se pueden cambiar por otros `.glb` en `js/bosque.js`.
+- Los árboles son modelos *low-poly* (Kenney) con colores naturales, elegidos para que el bosque corra en celulares y en Quest. Se pueden cambiar por otros `.glb` en `frontend/js/escena/bosque.js`.
 - En el computador, **Ctrl+W** cierra la pestaña en algunos navegadores: para bajar en vuelo también sirve **C**.
 - El historial no se sincroniza entre dispositivos.
 
 ## Próximos pasos sugeridos
 
-- [ ] Validar tiempos y frases con el psicólogo (en `js/protocolo.js`).
+- [ ] Validar tiempos y frases con el psicólogo (en `frontend/js/protocolo.js`).
 - [ ] Grabar una voz guía real (mp3) en lugar de la voz sintética.
 - [ ] Usar el giroscopio del celular para mirar girando el teléfono.
 - [ ] Usar los mandos o las manos en VR para elegir la duración y responder la escala dentro de las gafas.
