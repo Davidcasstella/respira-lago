@@ -1,0 +1,41 @@
+name: Reportar un error
+description: Algo no funciona como debería
+labels: ["error"]
+body:
+  - type: textarea
+    id: que-paso
+    attributes:
+      label: Qué pasó
+      description: Qué esperabas y qué pasó en cambio.
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para que vuelva a pasar
+      placeholder: "1. Abrí la página en…\n2. Toqué…\n3. …"
+    validations:
+      required: true
+  - type: dropdown
+    id: dispositivo
+    attributes:
+      label: Dispositivo
+      multiple: true
+      options: [Computador, Celular Android, iPhone o iPad, Meta Quest, Otras gafas]
+    validations:
+      required: true
+  - type: input
+    id: navegador
+    attributes:
+      label: Navegador y versión
+      placeholder: Chrome 140, Navegador de Meta Quest…
+  - type: dropdown
+    id: calidad
+    attributes:
+      label: Calidad gráfica
+      options: [Alta, Baja, No sé]
+  - type: textarea
+    id: consola
+    attributes:
+      label: Errores de la consola (opcional)
+      render: text

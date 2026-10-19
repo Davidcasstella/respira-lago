@@ -16,7 +16,7 @@ El estándar web se llama **WebXR**. Con un mismo código, la página puede pedi
 - **Control del entorno:** en VR se controla todo lo que ve y oye (luz cálida, agua, sonido bajo). En AR el fondo es lo que haya.
 - **Inmersión:** la sensación de "estar en otro lugar" ayuda a cortar el ciclo de pensamientos que alimenta la ira.
 
-La AR sí sirve para un uso más ligero: tener la luz de respiración flotando en el escritorio para una pausa rápida durante el día, sin aislarse.
+La AR sí sirve para un uso más ligero: tener la guía de respiración flotando en el escritorio para una pausa rápida durante el día, sin aislarse.
 
 ## Compatibilidad (octubre de 2026)
 
@@ -41,12 +41,14 @@ Antes de comprar gafas para pacientes, conviene probar el enlace publicado en el
 
 - **La cabeza mueve la vista:** el arrastre con el dedo deja de usarse.
 - **La sesión empieza sola** al entrar, con el nivel de ira que se marcó antes.
-- **En AR** se ocultan el cielo, el agua y los árboles, y solo queda la luz guía en el cuarto real.
-- La escena usa **metros reales**: los ojos a 1,6 m y la luz a 3 m, y la altura real la toma el visor (`local-floor`).
+- **La guía de los pulmones** flota abajo y a la izquierda de la mirada, para no tapar el frente.
+- **En AR** se ocultan el cielo, el río y el bosque, y solo queda la guía de respiración en el cuarto real.
+- La escena usa **metros reales**: los ojos a 1,6 m y la altura real la toma el visor (`local-floor`).
 
 ## Comodidad y seguridad en VR
 
-- El movimiento es lento y los giros suaves para evitar mareo (*cybersickness*).
+- Para evitar mareo (*cybersickness*) se camina despacio con la palanca izquierda (1,4 m/s), se gira por pasos de 30° con la derecha y en VR se desactivan correr, saltar y volar.
+- Si las gafas van lentas, se elige **Baja** en el selector de calidad de la pantalla de inicio: quita sombras y reflejos y pone menos plantas.
 - Sesiones cortas, de 1 a 5 minutos, sobre todo al principio.
 - Recomendar usarlo **sentado** y en un espacio despejado.
 - Algunas personas con epilepsia fotosensible, vértigo o ciertas condiciones no deberían usar VR; esto lo evalúa el profesional.

@@ -11,15 +11,15 @@
 <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
-<canvas id="scene" aria-label="Escena de un lago al atardecer"></canvas>
+<canvas id="scene" aria-label="Escena de un bosque con un río, animales y una fogata al atardecer"></canvas>
 
 <!-- Inicio -->
 <div class="layer" id="start">
   <div class="card-wrap">
     <div class="card">
       <div class="eyebrow">Ejercicio para la ira · prototipo</div>
-      <h1>Respira junto al <em>lago</em></h1>
-      <p>Una luz te guía: crece cuando tomas aire y se apaga cuando lo sueltas. Sueltas el aire más lento de lo que lo tomas; eso ayuda al cuerpo a bajar la activación.</p>
+      <h1>Respira junto al <em>río</em></h1>
+      <p>Una guía con unos pulmones te muestra cuándo tomar aire, cuándo soltarlo y qué hacer con los brazos. Sueltas el aire más lento de lo que lo tomas; eso ayuda al cuerpo a bajar la activación. Puedes minimizarla cuando quieras.</p>
       <div class="scale">
         <div class="q">¿Cuánta ira sientes ahora?</div>
         <div class="scale-row"><span class="scale-val" id="preVal">6</span><span class="scale-word" id="preWord">bastante</span></div>
@@ -34,13 +34,23 @@
           <button class="chip" data-min="5" aria-pressed="false">5 min</button>
         </div>
       </div>
+      <div class="scale">
+        <div class="q">Calidad gráfica</div>
+        <div class="chips" id="calidad">
+          <button class="chip" data-q="alta" aria-pressed="false">Alta · computador</button>
+          <button class="chip" data-q="baja" aria-pressed="false">Baja · celular y gafas</button>
+        </div>
+      </div>
       <button class="btn" id="go">Comenzar con sonido</button>
       <div class="btn-row">
         <button class="btn ghost" id="vrBtn">Ver en gafas (VR)</button>
         <button class="btn ghost" id="arBtn">Realidad aumentada</button>
       </div>
       <div class="note" id="xrNote" role="status"></div>
-      <p class="fine">Arrastra la pantalla para mirar alrededor. Usa las flechas (o W A S D en el computador) para moverte. Prototipo de demostración: no reemplaza la atención de un psicólogo.</p>
+      <div class="note" id="carga" role="status">Cargando el bosque…</div>
+      <p class="fine solo-raton">Computador: clic en la escena para mirar con el mouse (Esc lo suelta), W A S D para caminar, Shift para correr, Espacio para saltar y F para volar.</p>
+      <p class="fine solo-tactil">Celular: el círculo de la izquierda te mueve y arrastrar el dedo en la pantalla te deja mirar.</p>
+      <p class="fine">Prototipo de demostración: no reemplaza la atención de un psicólogo.</p>
     </div>
   </div>
 </div>
@@ -49,23 +59,29 @@
 <div class="layer" id="session" hidden>
   <div class="hud-top">
     <div class="phase" id="phase">Prepárate</div>
-    <div class="phase-sub" id="phaseSub">Mira la luz sobre el agua</div>
+    <div class="phase-sub" id="phaseSub">Sigue la guía de los pulmones</div>
     <div class="progress"><i id="bar"></i></div>
     <div class="clock" id="clock">0:00</div>
   </div>
+  <aside class="guia" id="guia" aria-label="Guía de respiración">
+    <button class="guia-min" id="guiaMin" aria-expanded="true" aria-label="Minimizar la guía">–</button>
+    <div class="guia-lienzo"></div>
+    <div class="guia-txt"><b id="guiaFase"></b><span id="guiaCuerpo" aria-live="polite"></span></div>
+  </aside>
   <div class="spacer"></div>
+  <div class="ayuda solo-raton" id="ayuda">Clic en la escena para mirar con el mouse</div>
   <div class="hud-bottom">
-    <div class="pad" aria-label="Moverse">
-      <button class="p-up" data-dir="fwd" aria-label="Avanzar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
-      <button class="p-left" data-dir="left" aria-label="Girar a la izquierda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-      <button class="p-right" data-dir="right" aria-label="Girar a la derecha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-      <button class="p-down" data-dir="back" aria-label="Retroceder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
-    </div>
+    <div class="joy solo-tactil" id="joy" aria-label="Moverse: arrastra el círculo"><i id="joyKnob"></i></div>
     <div class="tools">
       <button class="tool" id="soundT" aria-pressed="true">Sonido</button>
       <button class="tool" id="voiceT" aria-pressed="true">Voz guía</button>
       <button class="tool" id="endT" aria-pressed="true">Terminar</button>
-      <div class="hint">Arrastra para mirar</div>
+      <div class="acciones solo-tactil">
+        <button class="act" data-acc="bajar" id="btnBajar" hidden>Bajar</button>
+        <button class="act" data-acc="volar" aria-pressed="false" id="btnVolar">Volar</button>
+        <button class="act" data-acc="correr" aria-pressed="false">Correr</button>
+        <button class="act grande" data-acc="saltar" id="btnSaltar">Saltar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -89,18 +105,23 @@
       <div class="history" id="history"></div>
       <div class="btn-row">
         <button class="btn ghost" id="again">Repetir</button>
-        <button class="btn ghost" id="stay">Quedarme en el lago</button>
+        <button class="btn ghost" id="stay">Quedarme en el bosque</button>
       </div>
       <p class="fine">El historial se guarda solo en este navegador, como ejemplo de lo que el psicólogo podría revisar.</p>
     </div>
   </div>
 </div>
 
-<!-- Three.js r128 (motor 3D + WebXR) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Three.js r170 (motor 3D + WebXR) y sus ejemplos oficiales, con versión exacta -->
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
 <!-- Contenido terapéutico editable -->
 <script src="js/protocolo.js"></script>
 <!-- Escena, controles, sonido, sesión y VR/AR -->
-<script src="js/app.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

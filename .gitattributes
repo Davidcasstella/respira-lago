@@ -1,0 +1,5 @@
+# Saltos de línea normalizados y binarios marcados (no se comparan como texto)
+* text=auto eol=lf
+*.glb binary
+*.jpg binary
+*.png binary

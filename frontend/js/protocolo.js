@@ -16,14 +16,14 @@
    Los valores están en SEGUNDOS. Si una fase no se quiere usar, ponla en 0.
    ===================================================================== */
 const PROTOCOL = {
-  inhale: 4,     // segundos tomando aire (la luz crece)
+  inhale: 4,     // segundos tomando aire (los pulmones de la guía se llenan)
   hold: 1,       // pausa breve con los pulmones llenos
-  exhale: 6,     // segundos soltando el aire (la luz se apaga)
+  exhale: 6,     // segundos soltando el aire (los pulmones se vacían)
   rest: 1,       // pausa breve con los pulmones vacíos
 
   // Texto en pantalla de cada fase: [título grande, frase pequeña]
   cues: {
-    inhale: ["Toma aire", "Por la nariz, despacio, mientras la luz crece"],
+    inhale: ["Toma aire", "Por la nariz, despacio, mientras se llenan los pulmones"],
     hold:   ["Sostén", "Un instante"],
     exhale: ["Suelta", "Por la boca, más lento, deja ir la tensión"],
     rest:   ["Descansa", "Nota cómo se afloja el cuerpo"]
@@ -31,7 +31,17 @@ const PROTOCOL = {
 
   // Lo que dice la voz guía al empezar cada fase.
   // Si una fase no aparece aquí, la voz se queda en silencio en esa fase.
-  voice: { inhale: "Toma aire", exhale: "Suelta despacio" }
+  voice: { inhale: "Toma aire", exhale: "Suelta despacio" },
+
+  // Qué hacer con el cuerpo en cada fase. Aparece en la guía de los pulmones,
+  // donde una figura sube y baja los brazos. Para no usar los brazos, pon brazos: false.
+  brazos: true,
+  cuerpo: {
+    inhale: "Sube los brazos despacio, con las palmas hacia arriba, mientras llenas los pulmones",
+    hold:   "Brazos arriba, hombros sueltos",
+    exhale: "Baja los brazos poco a poco mientras sueltas el aire",
+    rest:   "Manos sobre el abdomen, nota cómo se mueve"
+  }
 };
 
 // Palabras que acompañan cada número de la escala de ira (posición 0 a 10).
